@@ -12,7 +12,7 @@ import {
   SESSION_TYPES, MEAL_TYPES, DEFAULT_SESSION_DURATIONS, DEFAULT_SESSION_INTENSITY, SKIP_REASONS,
 } from '@/lib/constants';
 import { today, formatDate } from '@/lib/utils';
-import type { SessionType, MealType, FavouriteMeal, FoodAnalysis } from '@/types';
+import type { SessionType, MealType, FavouriteMeal, FoodAnalysis, FoodLookupItem } from '@/types';
 
 /* ---------- types ---------- */
 interface GamificationData {
@@ -40,7 +40,7 @@ export default function LogPage() {
   const [nutritionOpen, setNutritionOpen] = useState(false);
 
   // Nutrition sub-mode
-  const [nutritionMode, setNutritionMode] = useState<'snap' | 'type' | 'favourites' | null>(null);
+  const [nutritionMode, setNutritionMode] = useState<'snap' | 'type' | 'search' | 'favourites' | null>(null);
 
   // Training form
   const [formType, setFormType] = useState<SessionType>('team_training');
@@ -77,6 +77,11 @@ export default function LogPage() {
   // Favourites
   const [favourites, setFavourites] = useState<FavouriteMeal[]>([]);
   const [favouritesLoading, setFavouritesLoading] = useState(false);
+
+  // Food lookup
+  const [lookupQuery, setLookupQuery] = useState('');
+  const [lookupResults, setLookupResults] = useState<FoodLookupItem[]>([]);
+  const [lookupSearching, setLookupSearching] = useState(false);
 
   // Wellness
   const [wellness, setWellness] = useState({ energy: 5, soreness: 5, fatigue: 5, mood: 5 });
@@ -236,6 +241,8 @@ export default function LogPage() {
     setEditProtein('');
     setEditCarbs('');
     setEditFat('');
+    setLookupQuery('');
+    setLookupResults([]);
   }
 
   async function analyzeText() {
@@ -340,6 +347,43 @@ export default function LogPage() {
     } finally {
       setFavouritesLoading(false);
     }
+  }
+
+  async function searchFood() {
+    if (!lookupQuery.trim()) return;
+    setLookupSearching(true);
+    setLookupResults([]);
+    try {
+      const res = await fetch('/api/food-lookup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: lookupQuery }),
+      });
+      if (!res.ok) throw new Error('Lookup failed');
+      const data = await res.json();
+      setLookupResults(data.results || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to search');
+    } finally {
+      setLookupSearching(false);
+    }
+  }
+
+  function selectLookupItem(item: FoodLookupItem) {
+    setNutritionResult({
+      food_name: `${item.food_name} (${item.serving_size})`,
+      calories: item.calories,
+      protein_g: item.protein_g,
+      carbs_g: item.carbs_g,
+      fat_g: item.fat_g,
+      confidence: 'high',
+    });
+    setEditCalories(String(item.calories));
+    setEditProtein(String(item.protein_g));
+    setEditCarbs(String(item.carbs_g));
+    setEditFat(String(item.fat_g));
+    setLookupResults([]);
+    setLookupQuery('');
   }
 
   async function logFavourite(fav: FavouriteMeal) {
@@ -715,6 +759,14 @@ export default function LogPage() {
                     fullWidth
                     variant="secondary"
                     size="lg"
+                    onClick={() => setNutritionMode('search')}
+                  >
+                    &#128269; Search It
+                  </Button>
+                  <Button
+                    fullWidth
+                    variant="secondary"
+                    size="lg"
                     onClick={() => {
                       setNutritionMode('favourites');
                       loadFavourites();
@@ -747,6 +799,82 @@ export default function LogPage() {
                       Analyze &#9889;
                     </Button>
                   </div>
+                </div>
+              )}
+
+              {/* Search It input */}
+              {nutritionMode === 'search' && (
+                <div className="flex flex-col gap-3">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                      Search for a food
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        value={lookupQuery}
+                        onChange={(e) => setLookupQuery(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') searchFood(); }}
+                        placeholder="e.g. chicken breast, banana, pasta"
+                        className="flex-1 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                        style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
+                      />
+                      <Button onClick={searchFood} disabled={!lookupQuery.trim() || lookupSearching}>
+                        {lookupSearching ? <Spinner size="sm" /> : 'Go'}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {lookupSearching && (
+                    <div className="flex flex-col items-center gap-2 py-4">
+                      <Spinner size="md" />
+                      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Looking up nutrition info...</p>
+                    </div>
+                  )}
+
+                  {lookupResults.length > 0 && (
+                    <div className="flex flex-col gap-2">
+                      <p className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+                        Tap to select &middot; {lookupResults.length} result{lookupResults.length !== 1 ? 's' : ''}
+                      </p>
+                      {lookupResults.map((item, i) => (
+                        <Card key={i} onClick={() => selectLookupItem(item)} className="!p-3">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1">
+                              <p className="text-sm font-semibold">{item.food_name}</p>
+                              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                                {item.serving_size}
+                              </p>
+                            </div>
+                            <p className="text-sm font-bold whitespace-nowrap" style={{ color: 'var(--accent)' }}>
+                              {item.calories} kcal
+                            </p>
+                          </div>
+                          <div className="flex gap-3 mt-1.5">
+                            <span className="text-[11px]" style={{ color: '#3b82f6' }}>P {item.protein_g}g</span>
+                            <span className="text-[11px]" style={{ color: '#f59e0b' }}>C {item.carbs_g}g</span>
+                            <span className="text-[11px]" style={{ color: '#a855f7' }}>F {item.fat_g}g</span>
+                          </div>
+                          {item.key_nutrients.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1.5">
+                              {item.key_nutrients.map((n, j) => (
+                                <span
+                                  key={j}
+                                  className="text-[10px] px-1.5 py-0.5 rounded-full"
+                                  style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-secondary)' }}
+                                >
+                                  {n}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+
+                  <Button variant="ghost" onClick={() => { setNutritionMode(null); setLookupQuery(''); setLookupResults([]); }}>
+                    Back
+                  </Button>
                 </div>
               )}
 

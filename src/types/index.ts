@@ -169,3 +169,15 @@ export interface FoodAnalysis {
   confidence: 'high' | 'medium' | 'low';
   items?: { name: string; calories: number; protein_g: number; carbs_g: number; fat_g: number }[];
 }
+
+export interface FoodLookupItem {
+  food_name: string;
+  serving_size: string;
+  calories: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+  fibre_g: number;
+  sugar_g: number;
+  key_nutrients: string[];
+}
