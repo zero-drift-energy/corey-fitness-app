@@ -12,7 +12,7 @@ import {
   SESSION_TYPES, MEAL_TYPES, DEFAULT_SESSION_DURATIONS, DEFAULT_SESSION_INTENSITY, SKIP_REASONS,
 } from '@/lib/constants';
 import { today, formatDate } from '@/lib/utils';
-import type { SessionType, MealType, FavouriteMeal, FoodAnalysis, FoodLookupItem } from '@/types';
+import type { SessionType, MealType, FavouriteMeal, FoodAnalysis, FoodLookupItem, NutritionLog } from '@/types';
 
 /* ---------- types ---------- */
 interface GamificationData {
@@ -83,6 +83,14 @@ export default function LogPage() {
   const [lookupResults, setLookupResults] = useState<FoodLookupItem[]>([]);
   const [lookupSearching, setLookupSearching] = useState(false);
 
+  // Auto-suggest for "Type It"
+  const [typeSuggestions, setTypeSuggestions] = useState<FoodLookupItem[]>([]);
+  const [typeSuggestLoading, setTypeSuggestLoading] = useState(false);
+  const typeSuggestTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Food diary
+  const [diaryEntries, setDiaryEntries] = useState<NutritionLog[]>([]);
+
   // Wellness
   const [wellness, setWellness] = useState({ energy: 5, soreness: 5, fatigue: 5, mood: 5 });
   const [wellnessSubmitting, setWellnessSubmitting] = useState(false);
@@ -94,9 +102,10 @@ export default function LogPage() {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const [gamRes, recoveryRes] = await Promise.all([
+      const [gamRes, recoveryRes, diaryRes] = await Promise.all([
         fetch('/api/gamification'),
         fetch('/api/recovery'),
+        fetch(`/api/nutrition?date=${todayStr}`),
       ]);
 
       if (gamRes.ok) {
@@ -108,6 +117,11 @@ export default function LogPage() {
       if (recoveryRes.ok) {
         const rec: WellnessStatus = await recoveryRes.json();
         if (rec.wellness_today) setWellnessDone(true);
+      }
+
+      if (diaryRes.ok) {
+        const entries: NutritionLog[] = await diaryRes.json();
+        setDiaryEntries(entries);
       }
     } catch {
       // partial data is fine
@@ -243,6 +257,51 @@ export default function LogPage() {
     setEditFat('');
     setLookupQuery('');
     setLookupResults([]);
+    setTypeSuggestions([]);
+    setTypeSuggestLoading(false);
+    if (typeSuggestTimer.current) clearTimeout(typeSuggestTimer.current);
+  }
+
+  function handleTypeInput(text: string) {
+    setNutritionText(text);
+    setTypeSuggestions([]);
+    if (typeSuggestTimer.current) clearTimeout(typeSuggestTimer.current);
+    if (text.trim().length < 2) {
+      setTypeSuggestLoading(false);
+      return;
+    }
+    setTypeSuggestLoading(true);
+    typeSuggestTimer.current = setTimeout(async () => {
+      try {
+        const res = await fetch('/api/food-lookup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: text.trim() }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setTypeSuggestions(data.results || []);
+        }
+      } catch { /* silent */ }
+      finally { setTypeSuggestLoading(false); }
+    }, 600);
+  }
+
+  function selectTypeSuggestion(item: FoodLookupItem) {
+    setNutritionResult({
+      food_name: `${item.food_name} (${item.serving_size})`,
+      calories: item.calories,
+      protein_g: item.protein_g,
+      carbs_g: item.carbs_g,
+      fat_g: item.fat_g,
+      confidence: 'high',
+    });
+    setEditCalories(String(item.calories));
+    setEditProtein(String(item.protein_g));
+    setEditCarbs(String(item.carbs_g));
+    setEditFat(String(item.fat_g));
+    setTypeSuggestions([]);
+    setNutritionText('');
   }
 
   async function analyzeText() {
@@ -569,6 +628,71 @@ export default function LogPage() {
         </Card>
       )}
 
+      {/* ========== FOOD DIARY ========== */}
+      {diaryEntries.length > 0 && (
+        <Card>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-headline font-bold text-base tracking-tight flex items-center gap-2">
+              <span className="material-symbols-outlined text-lg" style={{ color: 'var(--secondary)' }}>restaurant</span>
+              Today&apos;s Food Diary
+            </h2>
+            <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
+              {diaryEntries.reduce((sum, e) => sum + (e.calories || 0), 0)} kcal
+            </span>
+          </div>
+          <div className="flex flex-col gap-2">
+            {diaryEntries.map((entry) => {
+              const time = new Date(entry.created_at);
+              const timeStr = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              const mealIcon: Record<string, string> = {
+                breakfast: '\uD83C\uDF73', lunch: '\uD83C\uDF1E', dinner: '\uD83C\uDF19',
+                snack: '\uD83C\uDF4E', pre_training: '\u26A1', post_training: '\uD83D\uDD04',
+              };
+              return (
+                <div
+                  key={entry.id}
+                  className="flex items-center gap-3 p-3 rounded-lg"
+                  style={{ backgroundColor: 'var(--bg-input)', border: '1px solid var(--border-subtle)' }}
+                >
+                  <span className="text-lg flex-shrink-0">{mealIcon[entry.meal_type] || '\uD83C\uDF7D'}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold truncate">{entry.description || entry.meal_type}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
+                        {timeStr}
+                      </span>
+                      <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>&middot;</span>
+                      <span className="text-[10px] capitalize" style={{ color: 'var(--text-muted)' }}>
+                        {entry.meal_type.replace('_', '-')}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-sm font-bold font-headline" style={{ color: 'var(--accent)' }}>
+                      {entry.calories || 0}
+                    </p>
+                    <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>kcal</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {diaryEntries.length > 0 && (
+            <div className="flex gap-4 mt-3 pt-3" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+              <span className="text-[11px]" style={{ color: '#3b82f6' }}>
+                P {diaryEntries.reduce((s, e) => s + (e.protein_g || 0), 0)}g
+              </span>
+              <span className="text-[11px]" style={{ color: '#f59e0b' }}>
+                C {diaryEntries.reduce((s, e) => s + (e.carbs_g || 0), 0)}g
+              </span>
+              <span className="text-[11px]" style={{ color: '#a855f7' }}>
+                F {diaryEntries.reduce((s, e) => s + (e.fat_g || 0), 0)}g
+              </span>
+            </div>
+          )}
+        </Card>
+      )}
+
       {/* ========== TRAINING MODAL ========== */}
       <Modal isOpen={trainingOpen} onClose={() => { setTrainingOpen(false); resetTrainingForm(); }} title="Log Training Session">
         <form onSubmit={submitTraining} className="flex flex-col gap-4">
@@ -777,28 +901,71 @@ export default function LogPage() {
                 </div>
               )}
 
-              {/* Type It input */}
+              {/* Type It input with auto-suggest */}
               {nutritionMode === 'type' && (
                 <div className="flex flex-col gap-3">
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                    <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
                       What did you eat?
                     </label>
-                    <textarea
+                    <input
                       value={nutritionText}
-                      onChange={(e) => setNutritionText(e.target.value)}
-                      rows={3}
-                      placeholder="e.g. Chicken breast with rice and broccoli"
-                      className="rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all resize-none"
-                      style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
+                      onChange={(e) => handleTypeInput(e.target.value)}
+                      placeholder="Start typing... e.g. chicken breast"
+                      autoFocus
+                      className="rounded-lg px-4 py-3 text-sm outline-none focus:ring-2 transition-all"
+                      style={{
+                        backgroundColor: 'var(--bg-input)',
+                        color: 'var(--text-primary)',
+                        border: '1px solid var(--border-subtle)',
+                        '--tw-ring-color': 'var(--accent)',
+                      } as React.CSSProperties}
                     />
                   </div>
-                  <div className="flex gap-2">
-                    <Button variant="ghost" onClick={() => setNutritionMode(null)}>Back</Button>
+
+                  {typeSuggestLoading && (
+                    <div className="flex items-center gap-2 py-2">
+                      <Spinner size="sm" />
+                      <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Finding suggestions...</span>
+                    </div>
+                  )}
+
+                  {typeSuggestions.length > 0 && (
+                    <div className="flex flex-col gap-2">
+                      <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
+                        Suggestions
+                      </p>
+                      {typeSuggestions.map((item, i) => (
+                        <Card key={i} onClick={() => selectTypeSuggestion(item)} className="!p-3">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold truncate">{item.food_name}</p>
+                              <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>{item.serving_size}</p>
+                            </div>
+                            <div className="text-right flex-shrink-0">
+                              <p className="text-sm font-bold" style={{ color: 'var(--accent)' }}>{item.calories}</p>
+                              <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>kcal</p>
+                            </div>
+                          </div>
+                          <div className="flex gap-3 mt-1">
+                            <span className="text-[11px]" style={{ color: '#3b82f6' }}>P {item.protein_g}g</span>
+                            <span className="text-[11px]" style={{ color: '#f59e0b' }}>C {item.carbs_g}g</span>
+                            <span className="text-[11px]" style={{ color: '#a855f7' }}>F {item.fat_g}g</span>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+
+                  {nutritionText.trim().length >= 2 && !typeSuggestLoading && typeSuggestions.length === 0 && (
                     <Button fullWidth onClick={analyzeText} disabled={!nutritionText.trim()}>
-                      Analyze &#9889;
+                      Analyze Full Meal \u26A1
                     </Button>
-                  </div>
+                  )}
+
+                  <Button variant="ghost" onClick={() => { setNutritionMode(null); setTypeSuggestions([]); setNutritionText(''); }}>
+                    Back
+                  </Button>
                 </div>
               )}
 
