@@ -59,19 +59,33 @@ export default function OnboardingPage() {
   return (
     <div className="max-w-lg mx-auto py-10 px-4">
       {/* Header */}
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
-          Welcome to FitFooty! &#9917;
+      <div className="mb-8">
+        <span
+          className="text-[10px] font-bold uppercase tracking-[0.2em] mb-2 block"
+          style={{ color: 'var(--secondary)' }}
+        >
+          Performance Hub
+        </span>
+        <h1
+          className="text-4xl font-bold tracking-tighter font-headline mb-3"
+          style={{ color: 'var(--text-primary)' }}
+        >
+          CREATE YOUR
+          <br />
+          <span style={{ color: 'var(--accent)' }}>PROFILE</span>
         </h1>
-        <p className="text-base" style={{ color: 'var(--text-secondary)' }}>
-          Let&apos;s set up your profile so your AI coach can help you perform at your best.
+        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+          Set up your profile so your AI coach can help you perform at your best.
         </p>
       </div>
 
       <form onSubmit={handleSubmit}>
         {/* Personal Info */}
-        <Card className="mb-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wide mb-4" style={{ color: 'var(--text-muted)' }}>
+        <Card className="mb-4 !border-l-2" style={{ borderLeftColor: 'var(--secondary)' }}>
+          <h2
+            className="text-[10px] font-bold uppercase tracking-widest mb-4"
+            style={{ color: 'var(--text-muted)' }}
+          >
             Personal Info
           </h2>
           <div className="flex flex-col gap-4">
@@ -118,8 +132,11 @@ export default function OnboardingPage() {
         </Card>
 
         {/* Football Info */}
-        <Card className="mb-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wide mb-4" style={{ color: 'var(--text-muted)' }}>
+        <Card className="mb-4 !border-l-2" style={{ borderLeftColor: 'var(--accent)' }}>
+          <h2
+            className="text-[10px] font-bold uppercase tracking-widest mb-4"
+            style={{ color: 'var(--text-muted)' }}
+          >
             Football Info
           </h2>
           <div className="flex flex-col gap-4">
@@ -145,13 +162,16 @@ export default function OnboardingPage() {
         </Card>
 
         {error && (
-          <p className="text-sm text-center mb-4" style={{ color: 'var(--danger, #ef4444)' }}>
+          <div
+            className="rounded-lg p-3 mb-4 text-sm"
+            style={{ backgroundColor: 'var(--danger-container)', color: 'var(--danger)' }}
+          >
             {error}
-          </p>
+          </div>
         )}
 
         <Button type="submit" size="lg" fullWidth disabled={submitting}>
-          {submitting ? 'Setting up...' : 'Get Started'}
+          {submitting ? 'Setting up...' : 'Start Training'}
         </Button>
       </form>
     </div>

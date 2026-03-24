@@ -1,42 +1,58 @@
 @import "tailwindcss";
 
+/* ===== COREY FITNESS Design System (from Stitch) ===== */
+/* Material Design 3 dark theme - athletic/premium feel */
+
 :root {
-  --bg-primary: #0f172a;
-  --bg-secondary: #1e293b;
-  --bg-card: #1e293b;
-  --bg-input: #334155;
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-  --accent: #3b82f6;
-  --accent-hover: #2563eb;
+  /* Backgrounds (Surface system) */
+  --bg-primary: #0b1326;
+  --bg-secondary: #171f33;
+  --bg-card: #131b2e;
+  --bg-card-high: #222a3d;
+  --bg-input: #2d3449;
+  --bg-surface-bright: #31394d;
+
+  /* Text */
+  --text-primary: #dae2fd;
+  --text-secondary: #c2c6d6;
+  --text-muted: #8c909f;
+
+  /* Primary (Blue) */
+  --accent: #adc6ff;
+  --accent-hover: #4d8eff;
+  --accent-container: #4d8eff;
+  --on-accent: #002e6a;
+
+  /* Secondary (Gold) */
+  --secondary: #ffe083;
+  --secondary-container: #eec200;
+  --on-secondary: #3c2f00;
+
+  /* Tertiary */
+  --tertiary: #bcc7de;
+
+  /* Status */
   --success: #22c55e;
   --warning: #f59e0b;
-  --danger: #ef4444;
-  --border: #334155;
-}
+  --danger: #ffb4ab;
+  --danger-container: #93000a;
 
-[data-theme="light"] {
-  --bg-primary: #f8fafc;
-  --bg-secondary: #f1f5f9;
-  --bg-card: #ffffff;
-  --bg-input: #e2e8f0;
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #94a3b8;
-  --accent: #3b82f6;
-  --accent-hover: #2563eb;
-  --success: #16a34a;
-  --warning: #d97706;
-  --danger: #dc2626;
-  --border: #e2e8f0;
+  /* Borders */
+  --border: #424754;
+  --border-subtle: rgba(66, 71, 84, 0.3);
+
+  /* Font families */
+  --font-headline: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
 }
 
 body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-body);
   min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 * {
@@ -44,7 +60,36 @@ body {
   scrollbar-color: var(--bg-input) transparent;
 }
 
-/* Animations */
+::selection {
+  background-color: var(--accent-container);
+  color: var(--on-accent);
+}
+
+/* ===== Glass Effects ===== */
+.glass-card {
+  background: rgba(45, 52, 73, 0.4);
+  backdrop-filter: blur(20px);
+}
+
+.glass-nav {
+  background: rgba(11, 19, 38, 0.6);
+  backdrop-filter: blur(24px);
+}
+
+/* ===== Typography Utilities ===== */
+.font-headline {
+  font-family: var(--font-headline);
+}
+
+.font-body {
+  font-family: var(--font-body);
+}
+
+.text-shadow-sm {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* ===== Animations ===== */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
@@ -93,7 +138,7 @@ body {
 }
 
 .animate-shimmer {
-  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.05) 50%, transparent 100%);
   background-size: 200% 100%;
   animation: shimmer 2s infinite;
 }
@@ -106,13 +151,13 @@ body {
   animation: fire-pulse 0.5s ease-in-out infinite;
 }
 
-/* Player card gradients */
+/* ===== Player Card Gradients ===== */
 .card-gradient-silver {
   background: linear-gradient(135deg, #374151 0%, #6b7280 50%, #9ca3af 100%);
 }
 
 .card-gradient-blue {
-  background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 50%, #3b82f6 100%);
+  background: linear-gradient(135deg, #002e6a 0%, #4d8eff 50%, #adc6ff 100%);
 }
 
 .card-gradient-purple {
@@ -120,11 +165,25 @@ body {
 }
 
 .card-gradient-gold {
-  background: linear-gradient(135deg, #78350f 0%, #d97706 50%, #fbbf24 100%);
+  background: linear-gradient(135deg, #3c2f00 0%, #eec200 50%, #ffe083 100%);
 }
 
 .card-gradient-legendary {
-  background: linear-gradient(135deg, #dc2626 0%, #d97706 20%, #16a34a 40%, #2563eb 60%, #7c3aed 80%, #dc2626 100%);
+  background: linear-gradient(135deg, #dc2626 0%, #eec200 20%, #22c55e 40%, #4d8eff 60%, #7c3aed 80%, #dc2626 100%);
   background-size: 200% 200%;
   animation: shimmer 3s ease infinite;
+}
+
+/* ===== Border-left accent utility ===== */
+.border-l-accent {
+  border-left: 2px solid var(--accent);
+}
+
+.border-l-secondary {
+  border-left: 2px solid var(--secondary);
+}
+
+/* ===== Hexagon mask (for player stats) ===== */
+.hexagon-mask {
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
 }

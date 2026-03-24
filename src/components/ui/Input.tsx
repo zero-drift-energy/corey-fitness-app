@@ -21,7 +21,10 @@ export default function Input({
   return (
     <div className={`flex flex-col gap-1.5 ${className}`}>
       {label && (
-        <label className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+        <label
+          className="text-[10px] font-bold uppercase tracking-widest"
+          style={{ color: 'var(--text-muted)' }}
+        >
           {label}
         </label>
       )}
@@ -34,12 +37,13 @@ export default function Input({
         max={max}
         step={step}
         required={required}
-        className="rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+        className="rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 transition-all"
         style={{
           backgroundColor: 'var(--bg-input)',
           color: 'var(--text-primary)',
-          border: '1px solid var(--border)',
-        }}
+          border: '1px solid var(--border-subtle)',
+          '--tw-ring-color': 'var(--accent)',
+        } as React.CSSProperties}
       />
     </div>
   );

@@ -21,11 +21,11 @@ export default function Slider({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
-        <label className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+        <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
           {label}
         </label>
         {showValue && (
-          <span className="text-lg font-bold" style={{ color }}>
+          <span className="text-lg font-bold font-headline" style={{ color }}>
             {value}
           </span>
         )}
@@ -36,13 +36,13 @@ export default function Slider({
         max={max}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full h-2 rounded-full outline-none cursor-pointer"
+        className="w-full h-1.5 rounded-full outline-none cursor-pointer"
         style={{
           accentColor: color,
           background: `linear-gradient(to right, ${color} 0%, ${color} ${((value - min) / (max - min)) * 100}%, var(--bg-input) ${((value - min) / (max - min)) * 100}%, var(--bg-input) 100%)`,
         }}
       />
-      <div className="flex justify-between text-xs" style={{ color: 'var(--text-muted)' }}>
+      <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
         <span>{min}</span>
         <span>{max}</span>
       </div>

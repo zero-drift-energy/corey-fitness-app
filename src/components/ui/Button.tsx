@@ -16,25 +16,29 @@ export default function Button({
   children, onClick, type = 'button', variant = 'primary',
   size = 'md', disabled = false, className = '', fullWidth = false,
 }: ButtonProps) {
-  const baseStyles = 'font-semibold rounded-xl transition-all active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2';
+  const baseStyles = 'font-bold rounded-xl transition-all active:scale-[0.95] disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2 uppercase tracking-wider';
 
   const sizeStyles = {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2.5 text-sm',
-    lg: 'px-6 py-3 text-base',
+    sm: 'px-3 py-1.5 text-xs',
+    md: 'px-5 py-2.5 text-sm',
+    lg: 'px-8 py-4 text-base',
   };
 
   const variantStyles = {
-    primary: 'text-white',
+    primary: '',
     secondary: '',
-    danger: 'text-white',
+    danger: '',
     ghost: '',
   };
 
   const variantInline: Record<string, React.CSSProperties> = {
-    primary: { backgroundColor: 'var(--accent)' },
+    primary: {
+      background: 'linear-gradient(to bottom right, var(--accent), var(--accent-container))',
+      color: 'var(--on-accent)',
+      boxShadow: '0 4px 16px rgba(77,142,255,0.25)',
+    },
     secondary: { backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)' },
-    danger: { backgroundColor: 'var(--danger)' },
+    danger: { backgroundColor: 'var(--danger-container)', color: 'var(--danger)' },
     ghost: { backgroundColor: 'transparent', color: 'var(--text-secondary)' },
   };
 
