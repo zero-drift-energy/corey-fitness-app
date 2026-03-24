@@ -1053,7 +1053,7 @@ export default function LogPage() {
                   onClick={saveNutritionResult}
                   disabled={nutritionSaving}
                 >
-                  {nutritionSaving ? <Spinner size="sm" /> : 'Looks Good! &#9989;'}
+                  {nutritionSaving ? <Spinner size="sm" /> : 'Looks Good! \u2705'}
                 </Button>
               </div>
 
