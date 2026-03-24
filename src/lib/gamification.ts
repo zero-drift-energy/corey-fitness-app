@@ -54,8 +54,10 @@ export const CHALLENGE_TEMPLATES = [
 
 // ===== HELPER FUNCTIONS =====
 
-export function getLevelForXP(xp: number): typeof LEVELS[number] {
-  let current = LEVELS[0];
+type Level = { level: number; title: string; minXP: number; icon: string };
+
+export function getLevelForXP(xp: number): Level {
+  let current: Level = LEVELS[0];
   for (const level of LEVELS) {
     if (xp >= level.minXP) current = level;
     else break;
@@ -63,7 +65,7 @@ export function getLevelForXP(xp: number): typeof LEVELS[number] {
   return current;
 }
 
-export function getNextLevel(currentXP: number): typeof LEVELS[number] | null {
+export function getNextLevel(currentXP: number): Level | null {
   const currentLevel = getLevelForXP(currentXP);
   const nextIndex = LEVELS.findIndex(l => l.level === currentLevel.level) + 1;
   return nextIndex < LEVELS.length ? LEVELS[nextIndex] : null;
