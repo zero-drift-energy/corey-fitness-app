@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
@@ -65,6 +66,7 @@ function MacroRing({
 }
 
 export default function NutritionPage() {
+  const router = useRouter();
   const [meals, setMeals] = useState<NutritionLog[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [target, setTarget] = useState<DailyNutritionTarget | null>(null);
@@ -216,6 +218,28 @@ export default function NutritionPage() {
         <Button onClick={() => setModalOpen(true)} size="md">
           + Log Meal
         </Button>
+      </div>
+
+      {/* Quick Access Cards */}
+      <div className="grid grid-cols-3 gap-2">
+        <Card onClick={() => router.push('/meal-plan')} className="!p-3">
+          <div className="flex flex-col items-center gap-1 text-center">
+            <span className="material-symbols-outlined text-xl" style={{ color: 'var(--accent)' }}>calendar_month</span>
+            <span className="text-[10px] font-semibold" style={{ color: 'var(--text-secondary)' }}>Meal Plan</span>
+          </div>
+        </Card>
+        <Card onClick={() => router.push('/recipes')} className="!p-3">
+          <div className="flex flex-col items-center gap-1 text-center">
+            <span className="material-symbols-outlined text-xl" style={{ color: '#f59e0b' }}>menu_book</span>
+            <span className="text-[10px] font-semibold" style={{ color: 'var(--text-secondary)' }}>Recipes</span>
+          </div>
+        </Card>
+        <Card onClick={() => router.push('/grocery-list')} className="!p-3">
+          <div className="flex flex-col items-center gap-1 text-center">
+            <span className="material-symbols-outlined text-xl" style={{ color: '#22c55e' }}>shopping_cart</span>
+            <span className="text-[10px] font-semibold" style={{ color: 'var(--text-secondary)' }}>Groceries</span>
+          </div>
+        </Card>
       </div>
 
       {error && (
